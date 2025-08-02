@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Fuegos Artificiales</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: linear-gradient(to top, #0a0a0a, #1e2a78);
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+
+  class Particle {
+    constructor(x, y, hue, velX, velY) {
+      this.x = x;
+      this.y = y;
+      this.hue = hue;
+      this.velX = velX;
+      this.velY = velY;
+      this.alpha = 1;
+      this.size = Math.random() * 2 + 2;
+    }
+
+    update() {
+      this.x += this.velX;
+      this.y += this.velY;
+      this.velY += 0.02;
+      this.alpha -= 0.015;
+    }
+
+    draw() {
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = this.alpha;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = `hsl(${this.hue}, 100%, 60%)`;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = `hsl(${this.hue}, 100%, 70%)`;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    isAlive() {
+      return this.alpha > 0;
+    }
+  }
+
+  const particles = [];
+
+  function createFirework(x, y) {
+    const hue = Math.floor(Math.random() * 360);
+    const type = Math.random();
+
+    if (type < 0.3) {
+      createHeart(x, y, hue);
+    } else if (type < 0.6) {
+      createFlower(x, y, hue);
+    } else if (type < 0.8) {
+      createStar(x, y, hue);
+    } else {
+      createCircle(x, y, hue);
+    }
+  }
+
+  function createCircle(x, y, hue) {
+    for (let i = 0; i < 100; i++) {
+      const angle = Math.random() * 2 * Math.PI;
+      const speed = Math.random() * 4 + 1;
+      const velX = Math.cos(angle) * speed;
+      const velY = Math.sin(angle) * speed;
+      particles.push(new Particle(x, y, hue, velX, velY));
+    }
+  }
+
+  function createHeart(x, y, hue) {
+    for (let i = 0; i < 100; i++) {
+      const t = Math.PI * 2 * i / 100;
+      const xOffset = 16 * Math.pow(Math.sin(t), 3);
+      const yOffset = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+      particles.push(new Particle(x + xOffset * 5, y + yOffset * 5, hue, 0, 0));
+    }
+  }
+
+  function createFlower(x, y, hue) {
+    const petals = 6;
+    for (let i = 0; i < 120; i++) {
+      const angle = i * (2 * Math.PI / 120);
+      const r = 50 * Math.sin(petals * angle);
+      const velX = Math.cos(angle) * r * 0.05;
+      const velY = Math.sin(angle) * r * 0.05;
+      particles.push(new Particle(x, y, hue, velX, velY));
+    }
+  }
+
+  function createStar(x, y, hue) {
+    const points = 5;
+    for (let i = 0; i < 100; i++) {
+      const angle = (i / points) * Math.PI * 2;
+      const radius = (i % 2 === 0) ? 40 : 20;
+      const velX = Math.cos(angle) * radius * 0.1;
+      const velY = Math.sin(angle) * radius * 0.1;
+      particles.push(new Particle(x, y, hue, velX, velY));
+    }
+  }
+
+  function drawBackground() {
+    // Cielo
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, "#0a0a2a");
+    gradient.addColorStop(1, "#1e1e1e");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Estrellas
+    for (let i = 0; i < 100; i++) {
+      ctx.fillStyle = "white";
+      ctx.globalAlpha = Math.random();
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height / 2;
+      ctx.fillRect(x, y, 1.5, 1.5);
+    }
+
+    ctx.globalAlpha = 1;
+  }
+
+  function animate() {
+    drawBackground();
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      particles[i].update();
+      particles[i].draw();
+      if (!particles[i].isAlive()) {
+        particles.splice(i, 1);
+      }
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  // Más frecuentes (cada 400 ms)
+  setInterval(() => {
+    const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
+    const y = Math.random() * canvas.height * 0.4 + 80;
+    createFirework(x, y);
+  }, 400); // antes era 1200
+
+  animate();
+</script>
+</body>
+</html>
